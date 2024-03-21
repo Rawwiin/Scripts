@@ -2,10 +2,11 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.1.1
+// @version      0.1.2
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
+// @match        https://steamcommunity.com/profiles/*/games/*
 // @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -189,9 +190,10 @@ function initialStatusBar() {
 function removeStatusBar() {
     let statusBars = document.getElementsByClassName("cyberFatherStatusBar");
     if (statusBars && statusBars.length) {
-        statusBars.forEach((statusBar) => {
-            statusBar.remove();
-        });
+        for (let i = 0; i < statusBars.length; i++) {
+            statusBars[i].remove();
+            
+        }
     }
 }
 
@@ -396,6 +398,7 @@ function load(url, resolve) {
 }
 
 function getAppids(res, sort) {
+    let appid;
     if (sort) {
         let appidAndplaytimeRegex = /appid("|\\"|&quot;):(\d+).*?playtime_forever("|\\"|&quot;):(\d+)/g;
         let obj = {};
@@ -406,11 +409,13 @@ function getAppids(res, sort) {
         return sortedKeys;
     } else {
         let appidRegex = /appid("|\\"|&quot;):(\d+)/g;
-        let appidList = [];
+        let appidSet = new Set();
+        // let appidList = [];
         while (appid = appidRegex.exec(res)) {
-            appidList.push(appid[2]);
+            // appidList.push(appid[2]);
+            appidSet.add(appid[2]);
         }
-        return appidList;
+        return Array.from(appidSet);
     }
 }
 
