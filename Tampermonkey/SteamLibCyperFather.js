@@ -235,48 +235,48 @@ function identify() {
     }
 
     let describe;
-    if (myAppidList.length >= 10 && hisAppidList.length >= 10) {
-        let myTop100 = myAppidList.slice(0, 100);
-        let hisTop100 = hisAppidList.slice(0, 100);
-        let hisTop10 = hisTop100.slice(0, 10);
-        // let intersection = new Set(
-        //     [...myTop100].filter((x) => hisTop100.has(x))
-        // );
-        let intersection = 0;
-        for (let i = 0; i < myTop100.length; i++) {
-            if (hisTop100.includes(myTop100[i])) {
-                if (i < 10 && hisTop10.includes(myTop100[i])) {
-                    intersection += myTop100.length / 10 - i + 1;
-                } else {
-                    intersection += 1;
-                }
-            }
-        }
-        let fact = intersection / myTop100.length;
-        if (intersection >= 90 || fact >= 0.9) {
-            describe = "臭味相投";
-        } else if (intersection >= 80 || fact >= 0.8) {
-            describe = "心照神交";
-        } else if (intersection >= 70 || fact >= 0.7) {
-            describe = "相知恨晚";
-        } else if (intersection >= 60 || fact >= 0.6) {
-            describe = "志同道合";
-        } else if (intersection >= 50 || fact >= 0.5) {
-            describe = "同声相应";
-        } else if (intersection >= 40 || fact >= 0.4) {
-            describe = "不谋而合";
-        } else if (intersection >= 30 || fact >= 0.3) {
-            describe = "所见略同";
-        } else if (intersection >= 20 || fact >= 0.2) {
-            describe = "萍水相逢";
-        } else if (intersection >= 10 || fact >= 0.1) {
-            describe = "聊胜于无";
-        } else if (intersection >= 1 || fact >= 0.01) {
-            describe = "南辕北辙";
-        } else {
-            describe = "格格不入"; //断长续短
-        }
-    }
+    // if (myAppidList.length >= 10 && hisAppidList.length >= 10) {
+    //     let myTop100 = myAppidList.slice(0, 100);
+    //     let hisTop100 = hisAppidList.slice(0, 100);
+    //     let hisTop10 = hisTop100.slice(0, 10);
+    //     // let intersection = new Set(
+    //     //     [...myTop100].filter((x) => hisTop100.has(x))
+    //     // );
+    //     let intersection = 0;
+    //     for (let i = 0; i < myTop100.length; i++) {
+    //         if (hisTop100.includes(myTop100[i])) {
+    //             if (i < 10 && hisTop10.includes(myTop100[i])) {
+    //                 intersection += myTop100.length / 10 - i + 1;
+    //             } else {
+    //                 intersection += 1;
+    //             }
+    //         }
+    //     }
+    //     let fact = intersection / myTop100.length;
+    //     if (intersection >= 90 || fact >= 0.9) {
+    //         describe = "臭味相投";
+    //     } else if (intersection >= 80 || fact >= 0.8) {
+    //         describe = "心照神交";
+    //     } else if (intersection >= 70 || fact >= 0.7) {
+    //         describe = "相知恨晚";
+    //     } else if (intersection >= 60 || fact >= 0.6) {
+    //         describe = "志同道合";
+    //     } else if (intersection >= 50 || fact >= 0.5) {
+    //         describe = "同声相应";
+    //     } else if (intersection >= 40 || fact >= 0.4) {
+    //         describe = "不谋而合";
+    //     } else if (intersection >= 30 || fact >= 0.3) {
+    //         describe = "所见略同";
+    //     } else if (intersection >= 20 || fact >= 0.2) {
+    //         describe = "萍水相逢";
+    //     } else if (intersection >= 10 || fact >= 0.1) {
+    //         describe = "聊胜于无";
+    //     } else if (intersection >= 1 || fact >= 0.01) {
+    //         describe = "南辕北辙";
+    //     } else {
+    //         describe = "格格不入"; //断长续短
+    //     }
+    // }
     return describe ? describe + "的" + identity : identity;
 }
 
@@ -396,8 +396,8 @@ function load(url, resolve) {
 }
 
 function getAppids(res, sort) {
-    let appidAndplaytimeRegex = /appid("|\\"|&quot;):(\d+).*?playtime_forever("|\\"|&quot;):(\d+)/g;
     if (sort) {
+        let appidAndplaytimeRegex = /appid("|\\"|&quot;):(\d+).*?playtime_forever("|\\"|&quot;):(\d+)/g;
         let obj = {};
         while (appid = appidAndplaytimeRegex.exec(res)) {
             obj[appid[2]] = appid[4];
