@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Steam赛博父子鉴定 (游戏库筛选)
+// @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
 // @version      0.1.1
