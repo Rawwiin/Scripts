@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库筛选)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.1.0
+// @version      0.1.1
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
