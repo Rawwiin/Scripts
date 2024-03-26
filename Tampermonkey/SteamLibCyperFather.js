@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.2
+// @version      0.3.3
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -20,6 +20,7 @@
 // ==/UserScript==
 // TODO
 // BUG
+// 过滤游戏卡顿
 
 const url_my_wishlist = "https://steamcommunity.com/my/wishlist/";
 // const wishlistUrl = "https://store.steampowered.com/wishlist"
@@ -38,12 +39,81 @@ const vacAppidList = [
     223710, 104900, 221040, 227100, 212480, 202970, 4920, 215470, 219640, 61730, 214360, 204300,
     212410, 209610, 14770, 201070, 58610, 115300, 65800, 17710, 35450, 63950, 55110, 70000, 63000,
     201270, 55100, 63200, 63500, 42700, 300, 39000, 17570, 550, 10180, 1250, 500, 17500, 469, 440,
-    6510, 4000, 2100, 2400, 360, 1200, 320, 240, 80, 30, 40, 10, 60, 50, 20, 70,
+    6510, 4000, 2100, 2400, 360, 1200, 320, 240, 80, 30, 40, 10, 60, 50, 20, 70, 1245620, 976730,
+    555160, 1888160, 471710, 678950, 1172620, 454650, 671860, 251570, 518150, 823130, 252490,
+    1568590, 1268750, 418460, 1372110, 1461600, 1818750, 444090, 1399780, 581320, 552500, 633230,
+    266410, 1301210, 1815230, 291550, 447040, 686810, 594650, 393380, 1785150, 1097150, 798510,
+    950180, 1824220, 333930, 820520, 1029690, 381210, 544920, 886250, 378860, 1024890, 1928420,
+    460930, 438740, 282660, 1961460, 466240, 386360, 761890, 626690, 383120, 1172470, 753650,
+    1957780, 884660, 1575680, 2087030, 1377380, 299360, 706220, 307950, 715220, 895400, 1133060,
+    961200, 315210, 1556200, 393420, 327690, 813820, 1650010, 915810, 573100, 736220, 2073850,
+    582660, 760160, 2152790, 909750, 438100, 872200, 513710, 918570, 1789480, 1241100, 1049800,
+    651150, 1433140, 1121710, 714080, 1293660, 816020, 973580, 301520, 1956740, 964440, 1371580,
+    783770, 2221490, 1599340, 473690, 1262240, 1240440, 2051120, 1063730, 215100, 719890, 707010,
+    1194810, 269210, 304390, 1097840, 1227800, 2285150, 766370, 1286320, 1635450, 1008580, 715400,
+    1163550, 1473640, 1361210, 674690, 1607250, 835860, 1222730, 625340, 924970, 1294660, 299740,
+    611020, 1780330, 1963590, 520530, 1493750, 876460, 1189800, 381990, 1058650, 641080, 611360,
+    1566880, 322780, 236390, 1501750, 920690, 519190, 2000590, 1180380, 903950, 556440, 647590,
+    1436900, 1009290, 1233550, 314430, 1054690, 1186040, 1170950, 644290, 1913210, 1183940, 1903270,
+    1527890, 293220, 939510, 1442910, 1106750, 906930, 1132210, 622170, 880850, 1206370, 437220,
+    344760, 867400, 1226470, 594770, 2170420, 1276760, 2064870, 377140, 1816670, 547860, 2119490,
+    1147660, 991560, 751240, 1254120, 304030, 1093170, 2000270, 375230, 922620, 656240, 927350,
+    1171690, 653120, 1473480, 1408680, 805110, 819500, 2083800, 1412620, 738530, 1765520, 1769930,
+    1057240, 993870, 889750, 1133430, 1991140, 1419640, 331810, 752720, 1367080, 1657090, 202090,
+    421650, 419520, 42160, 584210, 738090, 1611740, 585030, 234530, 804810, 1478540, 499470,
+    1904230, 2719160, 1638720, 1205550, 709310, 2076040, 942810, 1271810, 819970, 2156210, 1692190,
+    596350, 763420, 719690, 923330, 770720, 1724660, 700580, 768350, 912290, 1888340, 1530870,
+    1004390, 844630, 1681770, 759510, 774941, 1487410, 737010, 2089760, 2023760, 1661320, 1793660,
+    654310, 878760, 737230, 858460, 1504620, 1692200, 1581460, 1504860, 468220, 1843080, 1867420,
+    1477610, 1829770, 1958370, 2222330, 1725420, 1585520, 2053090, 2324560, 2572270, 1940990,
+    2321720, 1875460, 1666300, 2654250, 2429660, 2427520, 1469120, 2842380, 1930870, 1189980,
+    2337480, 2231910, 1532550, 2699000, 2437010, 2287610, 1176940, 2790800, 2713510, 2383590,
+    2338060, 2313860, 2258030, 2236250, 2220430, 2125710, 1993280, 1948950, 377610, 2275170,
+    2101000, 2855320, 2818760, 2790880, 2781480, 2633570, 2611730, 2549560, 2542690, 2464790,
+    2295890, 2291900, 2259670, 2240860, 2090780, 2069210, 2021400, 2011600, 1826330, 1781970,
+    1655340, 1641290, 1639880, 1622200, 1582170, 1472900, 1435990, 1426320, 1368990, 1332530,
+    1326050, 1318350, 1297110, 1281720, 1270350, 1265940, 1172630, 1150000, 1143930, 1085780,
+    1067170, 1064780, 1064280, 996600, 972310, 924720, 920720, 911460, 882430, 845260, 844650,
+    822500, 803370, 746200, 743300, 737770, 689410, 640100, 579850, 568660, 550790, 541790, 524930,
+    459430, 418480, 405100, 381690, 369520, 349360, 347130, 331370, 258550, 304930, 222880, 33930,
+    107410, 359550, 346110, 2290180, 447820, 646910, 1520470, 218230, 1085660, 761890, 440900,
+    550650, 221100, 209870, 1083500, 747610, 1872760, 227940, 362300, 1934780, 407530, 1549180,
+    1874880, 1263550, 868270, 840800, 436520, 295110, 2399830, 578080, 433850, 764920, 355840,
+    433350, 439700, 530700, 815940, 1443350, 834910, 714210, 987350, 681660, 895970, 619080,
+    1372880, 555440, 513650, 459510, 1619990, 622590, 623990, 813000, 1600360, 931180, 994440,
+    802240, 1890860, 2325320, 2430930, 2358330, 1382120, 1075340, 1024020, 1006030, 975570, 950520,
+    845220, 764940, 764190, 760760, 667950, 459430, 445400, 407660, 376030, 960170, 1477590,
+    1049590, 1827180, 239660, 439350, 582660, 237310, 1377580, 339610, 11610, 1056640, 286940,
+    212390, 1011810, 454910, 1426440, 871120, 537180, 790650, 1826980, 253490, 1153700, 836620,
+    1185560, 361800, 1825750, 337410, 1292630, 542590, 2371630, 1531430, 1218740, 747970, 349720,
+    300970, 2356310, 921940, 2088180, 1132210, 2208530, 518660, 280620, 1287290, 1226470, 747920,
+    1379750, 662320, 1674470, 2720700, 2229260, 389430, 1258320, 2170050, 1689070, 2639000, 1692070,
+    1175210, 1524370, 681660, 1130700, 2258870, 369200, 223650, 102700, 360760, 356330, 1688720,
+    389300, 591530, 109400, 624910, 568810, 1840560, 212240, 1658740, 1695900, 1829180, 1524240,
+    2457550, 1804190, 696260, 2696470, 2710780, 1940810, 1874390, 754420, 516080, 2340400, 553850,
+    2167580, 550650, 1608220, 558230, 354290, 1056640, 212390, 371310, 2426960, 1011810, 838330,
+    890400, 1094710, 253490, 390100, 442080, 675560, 1338610, 539650, 1934850, 1232420, 1263550,
+    295950, 1563940, 1674340, 1218740, 350700, 390090, 2356310, 921940, 1342630, 1630280, 721030,
+    905640, 1226470, 536950, 1711430, 433350, 357500, 1549250, 2377950, 1863390, 949690, 1687760,
+    874240, 548290, 2552340, 2361570, 1574360, 610940, 658510, 895970, 2016940, 102700, 315640,
+    317110, 218470, 267790, 410560, 481890, 224320, 29520, 1952710, 2595550, 2208510, 2081110, 2200,
+    2620, 7940, 21090, 2630, 35450, 10090, 9010, 48190, 9050, 1238860, 2210, 24960, 201870, 2640,
+    17330, 15120, 32770, 13520, 9070, 24840, 17300, 203290, 13540, 19900, 324830, 17430, 47790,
+    324850, 208480, 13140, 1238880, 1238820, 212630, 9460, 24860, 2350, 236830, 47830, 10170, 17340,
+    3970, 21110, 21120, 211880, 10000, 32690, 32700, 7950, 238690, 212542, 203300, 13180, 10050,
+    10030, 10010, 212200, 1184140, 212160, 273110, 1934780, 372000, 216150, 495910, 2107670,
+    1175730, 2178420, 350280, 369200, 560380, 591530, 212180, 2074930, 927130, 1194260, 1979310,
+    2107680, 2585120, 2119720, 2396970, 516080, 1671200, 1008080, 1672740, 1913730, 1364020,
+    1881610, 1674340, 1969870, 1881700, 1668940, 1282270, 2009240, 2430450, 2541620, 1676000,
+    2700330, 2581010, 384030, 231060, 212370, 212180, 221080, 212220, 238110, 1922560, 1811260,
+    2195250, 2140330, 1517290, 2434630, 1010270, 555570, 1240290, 226700, 755790, 1674340, 994560,
+    955100, 677620, 731620, 1990390, 1938090, 2075730, 1240410,
 ];
 
 var isMarkOwn = true;
 var isMarkWish = true;
 var isHideOwn = false;
+var isHideNotWish = false;
 var shownCount = 0;
 
 var myAppidList;
@@ -320,9 +390,10 @@ function addStatusBar(isSelfPage) {
             if (isSelfPage) {
                 let html =
                     "<div class='cyberFatherStatusBar'>" +
-                    "<div style='display: grid;grid-template-columns: auto auto auto 1fr;justify-items: start;'>" +
+                    "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
                     '<button id="privateMPGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密多人游戏</button>' +
-                    '<button id="privateVacGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密VAC游戏</button>' +
+                    '<button id="privatePVPOLGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密线上玩家对战游戏</button>' +
+                    '<button id="privateVacGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密VAC/AntiCheat游戏</button>' +
                     '<button id="privateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密所有游戏</button>' +
                     '<button id="unprivateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">取消所有私密</button>' +
                     "</div>" +
@@ -339,6 +410,9 @@ function addStatusBar(isSelfPage) {
                             switch (eleId) {
                                 case "privateMPGames":
                                     privateGames(true, null, [1, 8, 36]);
+                                    break;
+                                case "privatePVPOLGames":
+                                    privateGames(true, null, [8, 36]);
                                     break;
                                 case "privateVacGames":
                                     // getVacAppidList().then((vacAppidList) => {
@@ -376,6 +450,9 @@ function addStatusBar(isSelfPage) {
                     "<label style='margin-left: 15px;'>鉴定结果：" +
                     "<span id='identify'></span>" +
                     "</label>" +
+                    // "<label style='margin-left: 15px; justify-self: end;'>仅显示愿望单中的游戏" +
+                    // '<input type="checkbox" name="myCheckbox" value="1" id="checkbox_hideNotWish" style="margin: 3px">' +
+                    // "</label>" +
                     "<label style='margin-left: 15px; justify-self: end;'>隐藏已拥有的游戏" +
                     '<input type="checkbox" name="myCheckbox" value="1" id="checkbox_hideMine" style="margin: 3px">' +
                     "</label>" +
@@ -388,10 +465,17 @@ function addStatusBar(isSelfPage) {
                     "</div>";
                 element[0].insertAdjacentHTML("beforebegin", html);
                 refreshStatusBar();
-                let checkbox = document.getElementById("checkbox_hideMine");
-                if (checkbox) {
-                    checkbox.addEventListener("change", function () {
-                        isHideOwn = checkbox.checked;
+                let checkbox_hideMine = document.getElementById("checkbox_hideMine");
+                if (checkbox_hideMine) {
+                    checkbox_hideMine.addEventListener("change", function () {
+                        isHideOwn = checkbox_hideMine.checked;
+                        refreshGameDivList();
+                    });
+                }
+                let checkbox_hideNotWish = document.getElementById("checkbox_hideNotWish");
+                if (checkbox_hideNotWish) {
+                    checkbox_hideNotWish.addEventListener("change", function () {
+                        isHideNotWish = checkbox_hideNotWish.checked;
                         refreshGameDivList();
                     });
                 }
@@ -550,13 +634,19 @@ function identify() {
     return describe ? describe + "的" + identity : identity;
 }
 
+let refreshing = false;
 function refreshGameDivList() {
+    if (refreshing) {
+        return;
+    }
+    refreshing = true;
     // shownCount = 0;
     // hisGameDivMap.forEach(function (gameDiv, appid) {
     //     hideGameDiv(appid, gameDiv);
     //     markGameDiv(appid, gameDiv);
     // });
     let lastGameDivTop = -150;
+
     var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
     if (gameListElement && gameListElement.length) {
         for (var i = 0; i < gameListElement.length; ++i) {
@@ -566,6 +656,18 @@ function refreshGameDivList() {
             markGameDiv(appid, gameDiv);
         }
     }
+
+    // let hisGameNum = hisAppidList ? hisAppidList.length : 0;
+    // var gameDiv = document.querySelector("._29H3o3m-GUmx6UfXhQaDAm");
+    // let i = 0;
+    // while (gameDiv && ++i <= hisGameNum) {
+    //     let appid = getAppidFromGameDiv(gameDiv);
+    //     lastGameDivTop = hideGameDiv(appid, gameDiv, lastGameDivTop);
+    //     markGameDiv(appid, gameDiv);
+    //     gameDiv = gameDiv.nextElementSibling;
+    // }
+
+    refreshing = false;
 }
 
 function getVacAppidList() {
@@ -638,14 +740,6 @@ function getAppDetails(appid) {
     });
 }
 
-function getAppidFromGameDiv(gameDiv) {
-    let aEle = gameDiv.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm")[0];
-    if (aEle) return getAppidFromAEle(aEle);
-    return null;
-}
-function getAppidFromAEle(gameDiv) {
-    return gameDiv.querySelector("._29H3o3m-GUmx6UfXhQaDAm");
-}
 function privateGame(private, gameDiv, btns, timeout) {
     return new Promise(function (resolve, reject) {
         if (private) {
@@ -692,17 +786,24 @@ function privateGame(private, gameDiv, btns, timeout) {
 // }
 
 function hideGameDiv(appid, gameDiv, lastGameDivTop) {
+    let display = gameDiv.style.display;
     if (
-        isHideOwn &&
-        ((myAppidList && myAppidList.includes(appid)) ||
-            (mySubAppidList && mySubAppidList.includes(appid)))
+        (isHideOwn &&
+            ((myAppidList && myAppidList.includes(appid)) ||
+                (mySubAppidList && mySubAppidList.includes(appid)))) ||
+        (isHideNotWish && myWishAppidList && !myWishAppidList.includes(appid))
     ) {
-        gameDiv.style.display = "none";
+        display = "none";
     } else {
-        gameDiv.style.display = "block";
+        display = "block";
         lastGameDivTop += 150;
     }
-    gameDiv.style.top = lastGameDivTop + "px";
+    if (display != gameDiv.style.display) {
+        gameDiv.style.display = display;
+    }
+    if (lastGameDivTop + "px" != gameDiv.style.top) {
+        gameDiv.style.top = lastGameDivTop + "px";
+    }
     return lastGameDivTop;
 }
 
@@ -775,10 +876,17 @@ function addGameListObserver(interval) {
     // }, interval);
 
     let timeout;
+    // let lastGameListElementLength = 0;
     window.addEventListener("scroll", () => {
         if (timeout) {
             clearTimeout(timeout);
         }
+        // var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
+        // if (gameListElement && lastGameListElementLength == gameListElement.length
+        //      && gameListElement[gameListElement.length - 1].style.top == (gameListElement.length - 1) * 150 + "px") {
+        //     return;
+        // }
+        // lastGameListElementLength = gameListElement.length;
         timeout = setTimeout(() => {
             // loadHisGameDivMap();
             refreshGameDivList();
@@ -787,7 +895,7 @@ function addGameListObserver(interval) {
 }
 
 function markGameDiv(appid, gameDiv) {
-    let color = "";
+    let color = gameDiv.style.backgroundColor;
     if (isMarkOwn && myAppidList && myAppidList.includes(appid)) {
         color = color_own;
     } else if (isMarkOwn && mySubAppidList && mySubAppidList.includes(appid)) {
@@ -795,7 +903,9 @@ function markGameDiv(appid, gameDiv) {
     } else if (isMarkWish && myWishAppidList && myWishAppidList.includes(appid)) {
         color = color_wish;
     }
-    gameDiv.style.backgroundColor = color;
+    if (color != gameDiv.style.backgroundColor) {
+        gameDiv.style.backgroundColor = color;
+    }
 }
 
 function load(url, callback) {
