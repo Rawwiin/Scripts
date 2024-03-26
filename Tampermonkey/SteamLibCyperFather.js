@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.0
+// @version      0.3.1
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -626,7 +626,10 @@ async function privateGames(private, appidList, categorieIds) {
 function getAppDetails(appid) {
     return new Promise(function (resolve, reject) {
         load(url_appdetails + appid, (res) => {
-            if (!res) resolve({});
+            if (!res) {
+                resolve({});
+                return;
+            }
             let s = res.indexOf("{");
             let e = res.lastIndexOf("}");
             if (s >= 0 && e > s) res = res.substring(s, e + 1);
