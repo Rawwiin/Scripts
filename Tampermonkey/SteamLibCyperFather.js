@@ -2,14 +2,14 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.3
+// @version      0.3.4
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
 // @match        https://steamcommunity.com/id/*/games?*
 // @match        https://steamcommunity.com/profiles/*/games/*
 // @match        https://steamcommunity.com/profiles/*/games?*
-// @icon         data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==
+// @icon      	 https://store.steampowered.com/favicon.ico
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -391,12 +391,13 @@ function addStatusBar(isSelfPage) {
                 let html =
                     "<div class='cyberFatherStatusBar'>" +
                     "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
-                    '<button id="privateMPGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密多人游戏</button>' +
+                    '<button id="privateMPGames" class="privateGames" style="background:transparent;color:#199FFF;border:none;cursor: pointer;">私密多人游戏</button>' +
                     '<button id="privatePVPOLGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密线上玩家对战游戏</button>' +
                     '<button id="privateVacGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密VAC/AntiCheat游戏</button>' +
                     '<button id="privateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密所有游戏</button>' +
                     '<button id="unprivateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">取消所有私密</button>' +
                     "</div>" +
+                    '<span id="privateResult" style="display:none;grid-column-end: span 2;"></span>' +
                     // '<div id="cfOverlay" style="display: none; position: fixed; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2; cursor: pointer;">' +
                     // "</div>" +
                     "</div>";
@@ -693,36 +694,55 @@ async function privateGames(private, appidList, categorieIds) {
     let i = 0;
     let count = 0;
     let gameDiv = document.querySelector("._29H3o3m-GUmx6UfXhQaDAm");
-    while (gameDiv && ++i <= hisGameNum) {
-        gameDiv.scrollIntoView({ block: "end", inline: "nearest" });
-        let btns = gameDiv.getElementsByClassName("_1pXbX5mBA7v__kVWHg0_Ja");
-        let aEle = getAEleFromGameDiv(gameDiv);
-        let appid = getAppidFromAEle(aEle);
-        let appName = aEle.innerText;
-        console.log(i + " " + appName);
-        if (btns && btns.length > 0) {
-            if (private && btns.length == 1) {
-                if ((!appidList && !categorieIds) || (appidList && appidList.includes(appid))) {
-                    await privateGame(true, gameDiv, btns, ++count * 2000);
-                } else if (categorieIds && categorieIds.length) {
-                    await getAppDetails(appid).then(async (res) => {
-                        let data;
-                        if (res && res[appid] && (data = res[appid].data) && data.categories) {
-                            for (let i = 0; i < data.categories.length; i++) {
-                                if (categorieIds.includes(data.categories[i].id)) {
-                                    await privateGame(true, gameDiv, btns, ++count * 2000);
-                                    break;
+    let gameNameList = "";
+    const interval = setInterval(function () {
+        if (gameDiv && ++i <= hisGameNum) {
+            if(i % 5 == 0) gameDiv.scrollIntoView({ block: "center", inline: "nearest" });
+            let btns = gameDiv.getElementsByClassName("_1pXbX5mBA7v__kVWHg0_Ja");
+            let aEle = getAEleFromGameDiv(gameDiv);
+            let appid = getAppidFromAEle(aEle);
+            let appName = aEle.innerText;
+            if (i % 50 == 0) console.log(i + "/" + hisGameNum);
+            if (btns && btns.length > 0) {
+                if (private && btns.length == 1) {
+                    if ((!appidList && !categorieIds) || (appidList && appidList.includes(appid))) {
+                        privateGame(true, btns, ++count / 100 + 100);
+                        gameNameList += appName + "\n";
+                    } else if (categorieIds && categorieIds.length) {
+                        getAppDetails(appid).then((res) => {
+                            let data;
+                            if (res && res[appid] && (data = res[appid].data) && data.categories) {
+                                for (let i = 0; i < data.categories.length; i++) {
+                                    if (categorieIds.includes(data.categories[i].id)) {
+                                        privateGame(true, btns, ++count / 100 + 100);
+                                        gameNameList += appName + "\n";
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
+                } else if (!private && btns.length >= 2) {
+                    privateGame(false, btns, ++count / 100 + 100);
+                    gameNameList += appName + "\n";
                 }
-            } else if (!private && btns.length >= 2) {
-                await privateGame(false, gameDiv, btns, ++count * 1000);
             }
+            gameDiv = gameDiv.nextElementSibling;
+        } else {
+            let privateResult = document.getElementById("privateResult");
+            if (privateResult) {
+                privateResult.innerText =
+                    "本次执行" +
+                    (private ? "私密 " : "取消私密 ") +
+                    count +
+                    " 款游戏：\n" +
+                    gameNameList;
+                privateResult.style.display = "block";
+                privateResult.scrollIntoView({ block: "end", inline: "nearest" });
+            }
+            clearInterval(interval);
         }
-        gameDiv = gameDiv.nextElementSibling;
-    }
+    }, private ? 100 : 50);
 }
 
 function getAppDetails(appid) {
@@ -740,24 +760,39 @@ function getAppDetails(appid) {
     });
 }
 
-function privateGame(private, gameDiv, btns, timeout) {
-    return new Promise(function (resolve, reject) {
-        if (private) {
-            btns[btns.length - 1].click();
-            setTimeout(() => {
-                let contextMenuItems = document.getElementsByClassName(
-                    "pFo3kQOzrl9qVLPXXGIMp contextMenuItem"
-                );
-                if (contextMenuItems && contextMenuItems.length >= 6) {
-                    contextMenuItems[5].click();
-                }
-                resolve();
-            }, 200);
-        } else {
-            btns[btns.length - 2].click();
-            resolve();
-        }
-    });
+function privateGame(private, btns, timeout) {
+    if (private) {
+        btns[btns.length - 1].click();
+        setTimeout(() => {
+            let contextMenuItems = document.getElementsByClassName(
+                "pFo3kQOzrl9qVLPXXGIMp contextMenuItem"
+            );
+            if (contextMenuItems && contextMenuItems.length >= 6) {
+                contextMenuItems[5].click();
+            }
+        }, 50);
+    } else {
+        btns[btns.length - 2].click();
+    }
+    // return new Promise(function (resolve, reject) {
+    //     setTimeout(() => {
+    //         if (private) {
+    //             btns[btns.length - 1].click();
+    //             setTimeout(() => {
+    //                 let contextMenuItems = document.getElementsByClassName(
+    //                     "pFo3kQOzrl9qVLPXXGIMp contextMenuItem"
+    //                 );
+    //                 if (contextMenuItems && contextMenuItems.length >= 6) {
+    //                     contextMenuItems[5].click();
+    //                 }
+    //                 resolve();
+    //             }, 300);
+    //         } else {
+    //             btns[btns.length - 2].click();
+    //             resolve();
+    //         }
+    //     }, timeout);
+    // });
 }
 
 // function privateGame(private, gameDiv, btns, timeout) {
