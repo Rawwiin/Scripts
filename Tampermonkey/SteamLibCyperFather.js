@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.5
+// @version      0.3.6
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -164,6 +164,8 @@ function init() {
     let account_pulldown = document.getElementById("account_pulldown");
     let myStrProfileName =
         account_pulldown && account_pulldown.textContent ? account_pulldown.textContent.trim() : "";
+    // DEBUG
+    // if (true) {
     if (myStrProfileName && myStrProfileName == hisStrProfileName) {
         loadHisGameList().then(() => {
             addStatusBar(true);
@@ -692,6 +694,19 @@ async function privateGames(private, appidList, categorieIds) {
     let i = 0;
     let count = 0;
     let gameDiv = document.querySelector("._29H3o3m-GUmx6UfXhQaDAm");
+    let sectionTabs = document.getElementsByClassName("sectionTab active");
+    if (sectionTabs && sectionTabs.length) {
+        for (let j = 0; j < sectionTabs.length; j++) {
+            let sectionTab = sectionTabs[j];
+            let span = sectionTab.querySelector("span");
+            if (span && span.innerText) {
+                let match = span.innerText.match(/\d+/);
+                let numStr = match && match[0];
+                hisGameNum = parseInt(numStr);
+                break;
+            }
+        }
+    }
     let gameNameList = "";
     const interval = setInterval(
         function () {
@@ -734,7 +749,9 @@ async function privateGames(private, appidList, categorieIds) {
                         gameNameList += appName + "\n";
                     }
                 }
-                gameDiv = gameDiv.nextElementSibling;
+
+                let nextGameDiv = gameDiv.nextElementSibling;
+                gameDiv = nextGameDiv ? nextGameDiv : i < hisGameNum ? gameDiv : null;
             } else {
                 let privateResult = document.getElementById("privateResult");
                 if (privateResult) {
@@ -745,26 +762,32 @@ async function privateGames(private, appidList, categorieIds) {
                         " 款游戏：\n" +
                         gameNameList;
                     privateResult.style.display = "block";
-                    privateResult.scrollIntoView({ block: "end", inline: "nearest" });
+
+                    privateResult.previousElementSibling
+                        ? privateResult.previousElementSibling.scrollIntoView({
+                              block: "center",
+                              inline: "nearest",
+                          })
+                        : privateResult.scrollIntoView({ block: "center", inline: "nearest" });
                 }
                 clearInterval(interval);
             }
         },
-        private ? 100 : 50
+        private ? 10 : 1
     );
 }
 
 function getAppDetails(appid) {
     return new Promise(function (resolve, reject) {
         load(url_appdetails + appid, (res) => {
-            if (!res) {
-                resolve({});
-                return;
+            if (res) {
+                let s = res.indexOf("{");
+                let e = res.lastIndexOf("}");
+                if (s >= 0 && e > s) {
+                    resolve(JSON.parse(res.substring(s, e + 1)));
+                }
             }
-            let s = res.indexOf("{");
-            let e = res.lastIndexOf("}");
-            if (s >= 0 && e > s) res = res.substring(s, e + 1);
-            resolve(JSON.parse(res));
+            resolve({});
         });
     });
 }
@@ -779,7 +802,7 @@ function privateGame(private, btns, timeout) {
             if (contextMenuItems && contextMenuItems.length >= 6) {
                 contextMenuItems[5].click();
             }
-        }, 50);
+        }, 5);
     } else {
         btns[btns.length - 2].click();
     }
