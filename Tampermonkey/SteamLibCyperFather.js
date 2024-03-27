@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.4
+// @version      0.3.5
 // @description  帮助大家找到心仪的赛博义父
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -164,7 +164,6 @@ function init() {
     let account_pulldown = document.getElementById("account_pulldown");
     let myStrProfileName =
         account_pulldown && account_pulldown.textContent ? account_pulldown.textContent.trim() : "";
-
     if (myStrProfileName && myStrProfileName == hisStrProfileName) {
         loadHisGameList().then(() => {
             addStatusBar(true);
@@ -646,14 +645,13 @@ function refreshGameDivList() {
     //     hideGameDiv(appid, gameDiv);
     //     markGameDiv(appid, gameDiv);
     // });
-    let lastGameDivTop = -150;
 
     var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
     if (gameListElement && gameListElement.length) {
         for (var i = 0; i < gameListElement.length; ++i) {
             let gameDiv = gameListElement[i];
             let appid = getAppidFromGameDiv(gameListElement[i]);
-            lastGameDivTop = hideGameDiv(appid, gameDiv, lastGameDivTop);
+            hideGameDiv(appid, gameDiv);
             markGameDiv(appid, gameDiv);
         }
     }
@@ -695,54 +693,65 @@ async function privateGames(private, appidList, categorieIds) {
     let count = 0;
     let gameDiv = document.querySelector("._29H3o3m-GUmx6UfXhQaDAm");
     let gameNameList = "";
-    const interval = setInterval(function () {
-        if (gameDiv && ++i <= hisGameNum) {
-            if(i % 5 == 0) gameDiv.scrollIntoView({ block: "center", inline: "nearest" });
-            let btns = gameDiv.getElementsByClassName("_1pXbX5mBA7v__kVWHg0_Ja");
-            let aEle = getAEleFromGameDiv(gameDiv);
-            let appid = getAppidFromAEle(aEle);
-            let appName = aEle.innerText;
-            if (i % 50 == 0) console.log(i + "/" + hisGameNum);
-            if (btns && btns.length > 0) {
-                if (private && btns.length == 1) {
-                    if ((!appidList && !categorieIds) || (appidList && appidList.includes(appid))) {
-                        privateGame(true, btns, ++count / 100 + 100);
-                        gameNameList += appName + "\n";
-                    } else if (categorieIds && categorieIds.length) {
-                        getAppDetails(appid).then((res) => {
-                            let data;
-                            if (res && res[appid] && (data = res[appid].data) && data.categories) {
-                                for (let i = 0; i < data.categories.length; i++) {
-                                    if (categorieIds.includes(data.categories[i].id)) {
-                                        privateGame(true, btns, ++count / 100 + 100);
-                                        gameNameList += appName + "\n";
-                                        break;
+    const interval = setInterval(
+        function () {
+            if (gameDiv && ++i <= hisGameNum) {
+                if (i % 5 == 0) gameDiv.scrollIntoView({ block: "center", inline: "nearest" });
+                let btns = gameDiv.getElementsByClassName("_1pXbX5mBA7v__kVWHg0_Ja");
+                let aEle = getAEleFromGameDiv(gameDiv);
+                let appid = getAppidFromAEle(aEle);
+                let appName = aEle.innerText;
+                if (i % 50 == 0) console.log(i + "/" + hisGameNum);
+                if (btns && btns.length > 0) {
+                    if (private && btns.length == 1) {
+                        if (
+                            (!appidList && !categorieIds) ||
+                            (appidList && appidList.includes(appid))
+                        ) {
+                            privateGame(true, btns, ++count / 100 + 100);
+                            gameNameList += appName + "\n";
+                        } else if (categorieIds && categorieIds.length) {
+                            getAppDetails(appid).then((res) => {
+                                let data;
+                                if (
+                                    res &&
+                                    res[appid] &&
+                                    (data = res[appid].data) &&
+                                    data.categories
+                                ) {
+                                    for (let i = 0; i < data.categories.length; i++) {
+                                        if (categorieIds.includes(data.categories[i].id)) {
+                                            privateGame(true, btns, ++count / 100 + 100);
+                                            gameNameList += appName + "\n";
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                        });
+                            });
+                        }
+                    } else if (!private && btns.length >= 2) {
+                        privateGame(false, btns, ++count / 100 + 100);
+                        gameNameList += appName + "\n";
                     }
-                } else if (!private && btns.length >= 2) {
-                    privateGame(false, btns, ++count / 100 + 100);
-                    gameNameList += appName + "\n";
                 }
+                gameDiv = gameDiv.nextElementSibling;
+            } else {
+                let privateResult = document.getElementById("privateResult");
+                if (privateResult) {
+                    privateResult.innerText =
+                        "本次执行" +
+                        (private ? "私密 " : "取消私密 ") +
+                        count +
+                        " 款游戏：\n" +
+                        gameNameList;
+                    privateResult.style.display = "block";
+                    privateResult.scrollIntoView({ block: "end", inline: "nearest" });
+                }
+                clearInterval(interval);
             }
-            gameDiv = gameDiv.nextElementSibling;
-        } else {
-            let privateResult = document.getElementById("privateResult");
-            if (privateResult) {
-                privateResult.innerText =
-                    "本次执行" +
-                    (private ? "私密 " : "取消私密 ") +
-                    count +
-                    " 款游戏：\n" +
-                    gameNameList;
-                privateResult.style.display = "block";
-                privateResult.scrollIntoView({ block: "end", inline: "nearest" });
-            }
-            clearInterval(interval);
-        }
-    }, private ? 100 : 50);
+        },
+        private ? 100 : 50
+    );
 }
 
 function getAppDetails(appid) {
@@ -820,7 +829,7 @@ function privateGame(private, btns, timeout) {
 //     });
 // }
 
-function hideGameDiv(appid, gameDiv, lastGameDivTop) {
+function hideGameDiv(appid, gameDiv) {
     let display = gameDiv.style.display;
     if (
         (isHideOwn &&
@@ -831,15 +840,10 @@ function hideGameDiv(appid, gameDiv, lastGameDivTop) {
         display = "none";
     } else {
         display = "block";
-        lastGameDivTop += 150;
     }
     if (display != gameDiv.style.display) {
         gameDiv.style.display = display;
     }
-    if (lastGameDivTop + "px" != gameDiv.style.top) {
-        gameDiv.style.top = lastGameDivTop + "px";
-    }
-    return lastGameDivTop;
 }
 
 function addSectionTabListener() {
