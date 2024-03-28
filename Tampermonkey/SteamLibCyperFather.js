@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Steam赛博父子鉴定 (游戏库蓝绿)
+// @name         Steam赛博父子鉴定 (游戏库蓝绿|一键私密|库存价值统计)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.3.6
-// @description  帮助大家找到心仪的赛博义父
+// @version      0.4.0
+// @description  游戏库蓝绿|一键私密|库存价值统计
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
 // @match        https://steamcommunity.com/id/*/games?*
@@ -28,9 +28,17 @@ const url_my_games = "https://steamcommunity.com/my/games?tab=all";
 const url_vac_games =
     "https://store.steampowered.com/search/?sort_by=Released_DESC&category1=998&category2=8&ndl=1";
 const url_appdetails = "https://store.steampowered.com/api/appdetails/?appids=";
+const url_appdetails_price_overview =
+    "https://store.steampowered.com/api/appdetails/?filters=price_overview&cc=cn&appids=";
 const color_own = "#54662f";
 const color_own_sub = color_own; //"#30655f";
 const color_wish = "#4c90b6";
+const price_gradient = [6, 11, 29, 42, 58, 76, 108, 136, 168, 198, 238, 268];
+const price_high = 198;
+const price_middle = 76;
+const price_low = 29;
+const color_price_high = "#ca2842";
+const color_price_middle = "#b9a074";
 const vacAppidList = [
     655740, 505460, 346330, 559650, 393380, 445220, 629760, 690790, 299740, 221100, 327090, 707010,
     252490, 700330, 476600, 730, 346110, 304930, 436520, 232090, 292730, 324810, 363680, 88801,
@@ -120,13 +128,11 @@ var myAppidList;
 var mySubAppidList;
 var myWishAppidList;
 var hisAppidList;
-// var hisGameDivMap = new Map();
+var appidPrice = {};
 var hisStrProfileName;
 
 var gameListObserver;
 var mySubProfileShowText = "";
-
-// var loadHisGameDivMaping = false;
 
 var interval = 2000;
 var retry = 200;
@@ -144,7 +150,7 @@ var ico_vac = "https://store.akamai.steamstatic.com/public/images/v6/ico/ico_vac
     //         console.log(xhr);
     //     },
     // });
-    getAppDetails(730);
+    // getAppDetails(730);
 
     init();
 })();
@@ -169,6 +175,7 @@ function init() {
     if (myStrProfileName && myStrProfileName == hisStrProfileName) {
         loadHisGameList().then(() => {
             addStatusBar(true);
+            addGameListObserver(500);
         });
         return;
     } else if (!myStrProfileName || myStrProfileName != GM_getValue("myStrProfileName")) {
@@ -189,7 +196,6 @@ function init() {
     const mySubGamesPromise = loadMySubGameList();
     Promise.all([myGamesPromise, myWishPromise, hisGameListPromise, mySubGamesPromise])
         .then(() => {
-            // loadHisGameDivMap();
             refreshGameDivList();
             addStatusBar();
             addGameListObserver(500);
@@ -206,7 +212,6 @@ function refresh() {
 
 function clear() {
     hisAppidList = null;
-    // hisGameDivMap.clear();
     removeStatusBar();
     // if (gameListObserver) {
     //     gameListObserver.disconnect();
@@ -339,40 +344,45 @@ function loadHisGameList() {
                 let hisRgGames = getRgGames(hisDataProfileGameslist);
                 hisAppidList = hisRgGames ? hisRgGames.map((game) => game.appid) : [];
                 console.log("加载TA的游戏", hisAppidList && hisAppidList.length);
+                if (hisAppidList && hisAppidList.length) {
+                    let appids = "";
+                    let requestPromiseArray = [];
+                    for (let i = 0; i < hisAppidList.length; i++) {
+                        let appid = hisAppidList[i];
+                        if (appids) {
+                            appids += ",";
+                        }
+                        appids += appid;
+
+                        if (appids.length >= 1900) {
+                            let request = getAppDetails(url_appdetails_price_overview, appids);
+                            request.then((appdetails) => {
+                                for (let key in appdetails) {
+                                    let price_overview;
+                                    if (
+                                        appdetails[key] &&
+                                        appdetails[key].data &&
+                                        (price_overview = appdetails[key].data.price_overview)
+                                    ) {
+                                        appidPrice[key] = price_overview.initial;
+                                    }
+                                }
+                            });
+                            requestPromiseArray.push(request);
+                            appids = "";
+                        }
+                    }
+                    Promise.all(requestPromiseArray).then(() => {
+                        refresh();
+                    });
+                }
                 clearInterval(intervalId);
                 resolve();
             }
         }, interval);
     });
 }
-
-function loadHisGameDivMap(force) {
-    if (!force && loadHisGameDivMaping) {
-        return;
-    }
-    loadHisGameDivMaping = true;
-    let count = 0;
-    const intervalId = setInterval(() => {
-        if (count++ > retry) {
-            loadHisGameDivMaping = false;
-            clearInterval(intervalId);
-            return;
-        }
-        var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
-        if (gameListElement && gameListElement.length) {
-            for (var i = 0; i < gameListElement.length; ++i) {
-                let appid = getAppidFromGameDiv(gameListElement[i]);
-                if (appid && !hisGameDivMap.has(appid)) {
-                    hisGameDivMap.set(appid, gameListElement[i]);
-                }
-            }
-            refreshGameDivList();
-
-            loadHisGameDivMaping = false;
-            clearInterval(intervalId);
-        }
-    }, interval);
-}
+``;
 
 function addStatusBar(isSelfPage) {
     let count = 0;
@@ -391,18 +401,62 @@ function addStatusBar(isSelfPage) {
             if (isSelfPage) {
                 let html =
                     "<div class='cyberFatherStatusBar'>" +
-                    "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
+                    "<div style='display: grid;grid-template-columns: auto auto auto auto auto 1fr;justify-items: start;'>" +
                     '<button id="privateMPGames" class="privateGames" style="background:transparent;color:#199FFF;border:none;cursor: pointer;">私密多人游戏</button>' +
                     '<button id="privatePVPOLGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密线上玩家对战游戏</button>' +
                     '<button id="privateVacGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密VAC/AntiCheat游戏</button>' +
                     '<button id="privateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密所有游戏</button>' +
-                    '<button id="unprivateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;">取消所有私密</button>' +
+                    '<button id="unprivateAllGames" class="privateGames" style="margin-left: 10px;background:transparent;color:#199FFF;border:none;cursor: pointer;grid-column-end: span 2;">取消所有私密</button>' +
+                    // "</div>" +
+                    // "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
+                    "<label style='margin-left: 0;display: none;' class='hisWorthDiv'>我的库存价值:" +
+                    "<span id='hisWorth'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>均价:" +
+                    "<span id='hisWorthAVG'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥" +
+                    price_high +
+                    "及以上游戏数:" +
+                    "<span id='hisWorthHighNum' style='color:" +
+                    color_price_high +
+                    "'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥" +
+                    price_middle +
+                    " ~ ¥" +
+                    (price_high - 1) +
+                    "游戏数:" +
+                    "<span id='hisWorthMiddleNum' style='color:" +
+                    color_price_middle +
+                    "'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥1 ~ ¥" +
+                    price_low +
+                    "游戏数:" +
+                    "<span id='hisWorthLowNum'></span>" +
+                    "</label>" +
+                    "<div style='margin-left: 15px;display: none;' class='hisWorthDiv'>" +
+                    '<select id="priceSelect"></select>' +
+                    '<button id="privatePriceGames" class="privateGames" style="margin-left: 0;background:transparent;color:#199FFF;border:none;cursor: pointer;">私密</button>' +
+                    "</div>" +
                     "</div>" +
                     '<span id="privateResult" style="display:none;grid-column-end: span 2;"></span>' +
                     // '<div id="cfOverlay" style="display: none; position: fixed; width: 100%; height: 100%; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 2; cursor: pointer;">' +
                     // "</div>" +
                     "</div>";
                 element[0].insertAdjacentHTML("beforebegin", html);
+                let priceSelect = document.getElementById("priceSelect");
+                if (priceSelect) {
+                    let options = '<option value="0">免费游戏</option>';
+                    for (let i = 0; i < price_gradient.length; i++) {
+                        let price = price_gradient[i];
+                        options +=
+                            '<option value="' + price * 100 + '">¥1 ~ ¥' + price + "</option>";
+                    }
+                    priceSelect.innerHTML = options;
+                }
+
                 let privateGamesEles = document.getElementsByClassName("privateGames");
                 if (privateGamesEles && privateGamesEles.length) {
                     for (let i = 0; i < privateGamesEles.length; i++) {
@@ -428,6 +482,12 @@ function addStatusBar(isSelfPage) {
                                 case "unprivateAllGames":
                                     privateGames(false);
                                     break;
+                                case "privatePriceGames":
+                                    let price = priceSelect.value;
+                                    if (price != null) {
+                                        privateGames(true, null, null, price);
+                                    }
+                                    break;
 
                                 default:
                                     break;
@@ -442,7 +502,7 @@ function addStatusBar(isSelfPage) {
                 }
                 let html =
                     "<div class='cyberFatherStatusBar'>" +
-                    "<div style='display: grid;grid-template-columns: auto auto auto 1fr;justify-items: start;'>" +
+                    "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
                     "<label style='margin-left: 0;'>TA拥有我库存外的游戏:" +
                     "<span id='notHave'></span>" +
                     "</label>" +
@@ -455,8 +515,37 @@ function addStatusBar(isSelfPage) {
                     // "<label style='margin-left: 15px; justify-self: end;'>仅显示愿望单中的游戏" +
                     // '<input type="checkbox" name="myCheckbox" value="1" id="checkbox_hideNotWish" style="margin: 3px">' +
                     // "</label>" +
-                    "<label style='margin-left: 15px; justify-self: end;'>隐藏已拥有的游戏" +
+                    "<label style='margin-left: 15px; justify-self: end;grid-column-end: span 2;'>隐藏已拥有的游戏" +
                     '<input type="checkbox" name="myCheckbox" value="1" id="checkbox_hideMine" style="margin: 3px">' +
+                    "</label>" +
+                    // "</div>" +
+                    // "<div style='display: grid;grid-template-columns: auto auto auto auto 1fr;justify-items: start;'>" +
+                    "<label style='margin-left: 0;display: none;' class='hisWorthDiv'>TA的库存价值:" +
+                    "<span id='hisWorth'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>均价:" +
+                    "<span id='hisWorthAVG'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥" +
+                    price_high +
+                    "及以上游戏数:" +
+                    "<span id='hisWorthHighNum' style='color:" +
+                    color_price_high +
+                    "'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥" +
+                    price_middle +
+                    " ~ ¥" +
+                    (price_high - 1) +
+                    "游戏数:" +
+                    "<span id='hisWorthMiddleNum' style='color:" +
+                    color_price_middle +
+                    "'></span>" +
+                    "</label>" +
+                    "<label style='margin-left: 15px;display: none;' class='hisWorthDiv'>¥" +
+                    price_low +
+                    "以下游戏数:" +
+                    "<span id='hisWorthLowNum'></span>" +
                     "</label>" +
                     "</div>" +
                     "<div style='display: grid;grid-template-columns: auto auto 1fr;justify-items: start;'>" +
@@ -503,6 +592,7 @@ function addStatusBar(isSelfPage) {
                     });
                 }
             }
+            refreshStatusBar();
             clearInterval(intervalId);
         }
     }, interval);
@@ -541,6 +631,42 @@ function refreshStatusBar() {
     let identifyEle = document.getElementById("identify");
     if (identifyEle) {
         identifyEle.textContent = identify();
+    }
+    if (appidPrice) {
+        let hisWorth = 0;
+        let highNum = 0;
+        let middleNum = 0;
+        let lowNum = 0;
+        let i = 0;
+        for (let key in appidPrice) {
+            i++;
+            let price = parseInt(appidPrice[key] / 100);
+            hisWorth += price;
+            if (price >= price_high) {
+                highNum++;
+            } else if (price >= price_middle) {
+                middleNum++;
+            } else if (price <= price_low) {
+                lowNum++;
+            }
+        }
+        let hisWorthAVG = i ?  parseInt(hisWorth / i) : 0;
+        let hisWorthDivs = document.getElementsByClassName("hisWorthDiv");
+        if (hisWorth && hisWorthDivs && hisWorthDivs.length) {
+            for (let i = 0; i < hisWorthDivs.length; i++) {
+                hisWorthDivs[i].style.display = "block";
+            }
+            let hisWorthSpan = document.getElementById("hisWorth");
+            hisWorthSpan && (hisWorthSpan.innerText = "¥ " + hisWorth);
+            let hisWorthAVGSpan = document.getElementById("hisWorthAVG");
+            hisWorthAVGSpan && (hisWorthAVGSpan.innerText = "¥ " + hisWorthAVG);
+            let highNumSpan = document.getElementById("hisWorthHighNum");
+            highNumSpan && (highNumSpan.innerText = highNum);
+            let middleNumSpan = document.getElementById("hisWorthMiddleNum");
+            middleNumSpan && (middleNumSpan.innerText = middleNum);
+            let lowNumSpan = document.getElementById("hisWorthLowNum");
+            lowNumSpan && (lowNumSpan.innerText = lowNum);
+        }
     }
 }
 
@@ -642,11 +768,6 @@ function refreshGameDivList() {
         return;
     }
     refreshing = true;
-    // shownCount = 0;
-    // hisGameDivMap.forEach(function (gameDiv, appid) {
-    //     hideGameDiv(appid, gameDiv);
-    //     markGameDiv(appid, gameDiv);
-    // });
 
     var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
     if (gameListElement && gameListElement.length) {
@@ -655,6 +776,7 @@ function refreshGameDivList() {
             let appid = getAppidFromGameDiv(gameListElement[i]);
             hideGameDiv(appid, gameDiv);
             markGameDiv(appid, gameDiv);
+            priceGameDiv(appid, gameDiv);
         }
     }
 
@@ -689,7 +811,7 @@ function getVacAppidList() {
     });
 }
 
-async function privateGames(private, appidList, categorieIds) {
+async function privateGames(private, appidList, categorieIds, price) {
     let hisGameNum = hisAppidList ? hisAppidList.length : 0;
     let i = 0;
     let count = 0;
@@ -720,13 +842,16 @@ async function privateGames(private, appidList, categorieIds) {
                 if (btns && btns.length > 0) {
                     if (private && btns.length == 1) {
                         if (
-                            (!appidList && !categorieIds) ||
-                            (appidList && appidList.includes(appid))
+                            (!appidList && !categorieIds && price == null) ||
+                            (appidList && appidList.includes(appid)) ||
+                            (price != null &&
+                                ((price == 0 && !appidPrice[appid]) ||
+                                    (appidPrice[appid] && appidPrice[appid] <= price)))
                         ) {
                             privateGame(true, btns, ++count / 100 + 100);
                             gameNameList += appName + "\n";
                         } else if (categorieIds && categorieIds.length) {
-                            getAppDetails(appid).then((res) => {
+                            getAppDetails(url_appdetails, appid).then((res) => {
                                 let data;
                                 if (
                                     res &&
@@ -777,17 +902,10 @@ async function privateGames(private, appidList, categorieIds) {
     );
 }
 
-function getAppDetails(appid) {
+function getAppDetails(url, appids) {
     return new Promise(function (resolve, reject) {
-        load(url_appdetails + appid, (res) => {
-            if (res) {
-                let s = res.indexOf("{");
-                let e = res.lastIndexOf("}");
-                if (s >= 0 && e > s) {
-                    resolve(JSON.parse(res.substring(s, e + 1)));
-                }
-            }
-            resolve({});
+        load(url + appids, (res) => {
+            resolve(getJsonFromStr(res));
         });
     });
 }
@@ -886,9 +1004,7 @@ function addSectionTabListener() {
                     return;
                 }
                 curUrl = targetUrl;
-                // console.log("点击了：", targetUrl);
                 if (regex.match(targetUrl)) {
-                    // loadHisGameDivMap(true);
                     refreshGameDivList();
                 }
             });
@@ -899,58 +1015,13 @@ function addSectionTabListener() {
 }
 
 function addGameListObserver(interval) {
-    // let count = 0;
-    // const intervalId = setInterval(() => {
-    //     if (++count > 10 || hisAppidList) {
-    //         // 结束定时器
-    //         clearInterval(intervalId);
-    //         return;
-    //     }
-    //     var targetNode = document.getElementsByClassName(
-    //         "_3tY9vKLCmyG2H2Q4rUJpkr"
-    //         // "gameslist-root"
-    //     )[0];
-    //     if (targetNode) {
-    //         let down = true;
-    //         // 创建一个观察者对象
-    //         gameListObserver = new MutationObserver(function (mutations) {
-    //             mutations.forEach(function (mutation) {
-    //                 if (mutation.type === "childList") {
-    //                     if (down) {
-    //                         down = false;
-    //                         setTimeout(() => {
-    //                             down = true;
-    //                             loadHisGameDivMap();
-    //                         }, interval);
-    //                     }
-    //                 }
-    //             });
-    //         });
-    //         // 传入目标节点和观察选项
-    //         gameListObserver.observe(targetNode, {
-    //             // attributes: true,
-    //             childList: true,
-    //             // subtree: true,
-    //         });
-    //         // gameListObserver.disconnect();
-    //         clearInterval(intervalId);
-    //     }
-    // }, interval);
-
     let timeout;
     // let lastGameListElementLength = 0;
     window.addEventListener("scroll", () => {
         if (timeout) {
             clearTimeout(timeout);
         }
-        // var gameListElement = document.getElementsByClassName("_29H3o3m-GUmx6UfXhQaDAm");
-        // if (gameListElement && lastGameListElementLength == gameListElement.length
-        //      && gameListElement[gameListElement.length - 1].style.top == (gameListElement.length - 1) * 150 + "px") {
-        //     return;
-        // }
-        // lastGameListElementLength = gameListElement.length;
         timeout = setTimeout(() => {
-            // loadHisGameDivMap();
             refreshGameDivList();
         }, interval);
     });
@@ -967,6 +1038,24 @@ function markGameDiv(appid, gameDiv) {
     }
     if (color != gameDiv.style.backgroundColor) {
         gameDiv.style.backgroundColor = color;
+    }
+}
+
+function priceGameDiv(appid, gameDiv) {
+    let price = appidPrice[appid];
+    if (!price) {
+        return;
+    }
+    let aEle = getAEleFromGameDiv(gameDiv);
+    if (!aEle || aEle.innerText.includes("¥")) {
+        return;
+    }
+    price = price / 100;
+    aEle.innerText += "【¥" + price + "】";
+    if (price >= price_high) {
+        aEle.style.color = color_price_high;
+    } else if (price >= price_middle) {
+        aEle.style.color = color_price_middle;
     }
 }
 
@@ -1061,4 +1150,15 @@ function rgWishlistData(document) {
         }
     }
     return null;
+}
+
+function getJsonFromStr(str) {
+    if (!str) {
+        return {};
+    }
+    let s = str.indexOf("{");
+    let e = str.lastIndexOf("}");
+    if (s >= 0 && e > s) {
+        return JSON.parse(str.substring(s, e + 1));
+    }
 }
