@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿|一键私密|库存价值统计)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.4.0
+// @version      0.4.1
 // @description  游戏库蓝绿|一键私密|库存价值统计
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -354,7 +354,7 @@ function loadHisGameList() {
                         }
                         appids += appid;
 
-                        if (appids.length >= 1900) {
+                        if (i + 1 == hisAppidList.length || appids.length >= 1900) {
                             let request = getAppDetails(url_appdetails_price_overview, appids);
                             request.then((appdetails) => {
                                 for (let key in appdetails) {
