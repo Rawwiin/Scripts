@@ -2,7 +2,7 @@
 // @name         Steam赛博父子鉴定 (游戏库蓝绿|一键私密|库存价值统计)
 // @license      MIT
 // @namespace    http://tampermonkey.net/
-// @version      0.4.1
+// @version      0.4.2
 // @description  游戏库蓝绿|一键私密|库存价值统计
 // @author       Rawwiin
 // @match        https://steamcommunity.com/id/*/games/*
@@ -17,6 +17,8 @@
 // @grant        GM_notification
 // @grant        GM_info
 // @run-at       document-end
+// @downloadURL https://update.greasyfork.org/scripts/490371/Steam%E8%B5%9B%E5%8D%9A%E7%88%B6%E5%AD%90%E9%89%B4%E5%AE%9A%20%28%E6%B8%B8%E6%88%8F%E5%BA%93%E8%93%9D%E7%BB%BF%7C%E4%B8%80%E9%94%AE%E7%A7%81%E5%AF%86%7C%E5%BA%93%E5%AD%98%E4%BB%B7%E5%80%BC%E7%BB%9F%E8%AE%A1%29.user.js
+// @updateURL https://update.greasyfork.org/scripts/490371/Steam%E8%B5%9B%E5%8D%9A%E7%88%B6%E5%AD%90%E9%89%B4%E5%AE%9A%20%28%E6%B8%B8%E6%88%8F%E5%BA%93%E8%93%9D%E7%BB%BF%7C%E4%B8%80%E9%94%AE%E7%A7%81%E5%AF%86%7C%E5%BA%93%E5%AD%98%E4%BB%B7%E5%80%BC%E7%BB%9F%E8%AE%A1%29.meta.js
 // ==/UserScript==
 // TODO
 // BUG
@@ -915,7 +917,8 @@ function privateGame(private, btns, timeout) {
         btns[btns.length - 1].click();
         setTimeout(() => {
             let contextMenuItems = document.getElementsByClassName(
-                "pFo3kQOzrl9qVLPXXGIMp contextMenuItem"
+                // "pFo3kQOzrl9qVLPXXGIMp contextMenuItem"
+                "contextMenuItem"
             );
             if (contextMenuItems && contextMenuItems.length >= 6) {
                 contextMenuItems[5].click();
