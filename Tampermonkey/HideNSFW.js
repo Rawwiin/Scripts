@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         隐藏NSFW
 // @namespace    http://tampermonkey.net/
-// @version      24.12.26
+// @version      24.12.30
 // @description  避免网站NSFW图片直接展示到电脑屏幕
 // @author       Rawwiin
 // @match        *://*/*
@@ -14,26 +14,12 @@
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 
+// @license MIT
+
 // ==/UserScript==
 
 (function () {
     'use strict';
-
-
-    Array.prototype.indexOf = function (val) {
-        for (var i = 0; i < this.length; i++) if (this[i] == val) return i;
-        return -1;
-    }
-    Array.prototype.remove = function (val) {
-        while (true) {
-            var index = this.indexOf(val);
-            if (index > -1) {
-                this.splice(index, 1);
-            } else {
-                break;
-            }
-        }
-    }
 
     var hpop_config_custom;
     var hpop_config_default = {
