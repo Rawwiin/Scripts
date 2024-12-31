@@ -163,7 +163,7 @@
         generateControlPanel();
         menu_Func_regist();
 
-        
+
         // 根据记忆状态（显示/隐藏）初始化该网站
         if ((hpop_config_custom.sitesHide.indexOf(document.location.hostname) > -1 || hpop_config_custom.globalHide)
             && hpop_config_custom.sitesShow.indexOf(document.location.hostname) < 0) {
@@ -179,13 +179,10 @@
         return GM_registerMenuCommand(
             `${hpop_config_custom.globalHide ? '✅' : '❌'}` + '全局隐藏',
             function (event) {
-                console.log(event)
-                if (hpop_config_custom.globalHide) {
-                    imgShow();
-                    hpop_config_custom.globalHide = false;
-                } else {
-                    imgHide();
-                    hpop_config_custom.globalHide = true;
+                hpop_config_custom.globalHide = !hpop_config_custom.globalHide;
+                if (hpop_config_custom.sitesHide.indexOf(document.location.hostname) < 0
+                    && hpop_config_custom.sitesShow.indexOf(document.location.hostname) < 0) {
+                    hpop_config_custom.globalHide ? imgHide() : imgShow();
                 }
                 // 保存当前配置到本地缓存
                 GM_setValue("hpop_config", hpop_config_custom);
